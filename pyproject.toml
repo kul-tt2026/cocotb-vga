@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cocotb-vga"
+version = "0.1.0"
+description = "Capture VGA output from a cocotb simulation into PNG frames, GIFs and MP4s, with cycle-accurate timing checks"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Simon Haepers", email = "simon.haepers@kuleuven.be" }]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.22",
+    "pillow>=9.0",
+    "cocotb>=1.9",
+]
+
+[project.optional-dependencies]
+video = ["imageio>=2.31", "imageio-ffmpeg>=0.4.9"]
+dev = ["pytest>=7"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cocotb_vga"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

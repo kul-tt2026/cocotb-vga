@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.venv/
+sim/sim_build/
+sim/results.xml
+sim/vga_out*/
