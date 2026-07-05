@@ -94,5 +94,6 @@ class Frame:
             f"frame {self.index}: {n_bad}/{bad.size} pixels differ "
             f"(max |delta| = {int(diff.max())}, tolerance = {tolerance}); first "
             f"mismatch at (x={x0}, y={y0}): captured "
-            f"{tuple(self.data[y0, x0])}, expected {tuple(exp[y0, x0])}{note}"
+            f"{tuple(int(v) for v in self.data[y0, x0])}, expected "
+            f"{tuple(int(v) for v in exp[y0, x0])}{note}"
         )
