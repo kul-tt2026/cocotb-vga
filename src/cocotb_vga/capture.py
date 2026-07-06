@@ -42,6 +42,11 @@ class VGACapture:
         For designs that emit one pixel every ``clk_div`` input clocks
         (e.g. a 50 MHz design with an internal /2 pixel clock), sample every
         ``clk_div``-th edge, offset by ``clk_phase``.
+    progress_cycles:
+        Log a progress line every N sampled cycles (0 disables). Sampling
+        from Python is slow (a full 640x480 frame is 420k cycles and takes
+        minutes under Icarus), so the heartbeat shows the capture is alive
+        and where the beam is.
     """
 
     def __init__(self, clock, bus, timing: VGATiming, *,
@@ -52,7 +57,8 @@ class VGACapture:
                  clk_phase: int = 0,
                  save_frames: bool = True,
                  png_scale: int = 1,
-                 keep_frames: bool = True):
+                 keep_frames: bool = True,
+                 progress_cycles: int = 100_000):
         if sample_edge not in ("rising", "falling"):
             raise ValueError("sample_edge must be 'rising' or 'falling'")
         if not (0 <= clk_phase < clk_div):
@@ -68,6 +74,7 @@ class VGACapture:
         self._clk_phase = clk_phase
         self._save_frames = save_frames
         self._png_scale = png_scale
+        self._progress_cycles = progress_cycles
         self._frame_event = Event()
         self._task = None
         self.assembler = FrameAssembler(
@@ -99,17 +106,39 @@ class VGACapture:
         edge = edge_cls(self._clock)
         sample = self._bus.sample
         process = self.assembler.process
+        beat = self._progress_cycles
+        count = 0
         if self._clk_div == 1:
             while True:
                 await edge
                 process(sample())
+                count += 1
+                if beat and count % beat == 0:
+                    self._log_progress()
         else:
             n = 0
             while True:
                 await edge
                 if n == self._clk_phase:
                     process(sample())
+                    count += 1
+                    if beat and count % beat == 0:
+                        self._log_progress()
                 n = (n + 1) % self._clk_div
+
+    def _log_progress(self):
+        asm = self.assembler
+        if not asm.locked:
+            detail = "waiting for vsync lock"
+            if asm.hsync_edges == 0:
+                detail += "; no hsync edges seen yet"
+            if asm.unresolved_samples == asm.cycles:
+                detail += "; all samples x/z so far - design still in reset?"
+        else:
+            detail = (f"scanning line {asm.current_line}/{self.timing.v_total} "
+                      f"of frame {asm.frame_count}")
+        self.log.info("progress: %s cycles sampled, %d complete frame(s), %s",
+                      f"{asm.cycles:,}", asm.frame_count, detail)
 
     def _on_frame(self, frame: Frame) -> None:
         if self._save_frames and self.out_dir is not None:
@@ -142,6 +171,11 @@ class VGACapture:
         if max_cycles is None:
             missing = max(0, count - asm.frame_count)
             max_cycles = (missing + 2) * self.timing.cycles_per_frame
+        self.log.info(
+            "waiting for %d complete frame(s) - up to %s pixel cycles at %s "
+            "cycles/frame; per-cycle sampling under Icarus typically runs "
+            "5-15k cycles/s, so full-size frames take minutes",
+            count, f"{max_cycles:,}", f"{self.timing.cycles_per_frame:,}")
         deadline = asm.cycles + max_cycles
         tick = max(1, self.timing.h_total * 4)
         while asm.frame_count < count:

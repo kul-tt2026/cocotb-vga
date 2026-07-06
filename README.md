@@ -107,6 +107,21 @@ pytest
 so a design that renders the reference pattern in hardware can be verified
 pixel-exactly end-to-end.
 
+## Performance and progress
+
+The monitor samples every pixel-clock cycle from Python, which costs on the
+order of 100 µs per cycle under Icarus + cocotb — a full 640×480@60 frame is
+420,000 cycles, so expect **one to a few minutes per frame** of wall-clock
+time. The capture logs a progress line every 100k cycles
+(`progress_cycles=`, 0 to disable) and announces the expected cycle count in
+`wait_for_frames()`, so a silent simulation means a stopped simulation, not
+a slow one.
+
+Icarus tip: pressing Ctrl-C does **not** kill `vvp` — it pauses the
+simulation into an interactive `>` prompt until you type `cont` (resume) or
+`finish` (quit). Add `SIM_ARGS += -n` to your cocotb Makefile to make
+Ctrl-C terminate the simulation instead.
+
 ## Video export
 
 `save_gif()` always works (Pillow). `save_mp4()` uses imageio

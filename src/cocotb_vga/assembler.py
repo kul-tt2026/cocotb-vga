@@ -81,6 +81,11 @@ class FrameAssembler:
     def frame_count(self) -> int:
         return self._emitted
 
+    @property
+    def current_line(self) -> Optional[int]:
+        """Line currently being scanned (None before vertical lock)."""
+        return self._v
+
     def _error(self, cycle: int, kind: str, expected: int, measured: int) -> None:
         first = kind not in self.error_counts
         self.error_counts[kind] = self.error_counts.get(kind, 0) + 1
