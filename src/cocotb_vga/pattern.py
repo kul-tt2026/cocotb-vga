@@ -1,10 +1,14 @@
-"""The color-bar test pattern shared by the bundled ``dummy_vga.v``
-generator, the sim self-test, and the pure-Python unit tests.
+"""The reference color-bar test pattern.
 
-The pattern is 8 vertical color bars (2 bits per channel) that shift one
-bar position every frame, so animation is visible in exported GIFs/MP4s.
-Bar 7 is dark teal rather than black so it remains distinguishable from
-blanking. Must be kept in sync with ``verilog/dummy_vga.v``.
+8 vertical bars (2 bits per channel) that shift one bar position every
+frame, so animation is visible in exported GIFs/MP4s and frame ordering
+can be asserted. Bar 7 is dark teal rather than black so it remains
+distinguishable from blanking.
+
+Used by the library's unit tests (via :func:`synthetic_stream`) and by
+example designs that implement this pattern in hardware to demonstrate
+pixel-exact verification (bar index = ``x * 8 // h_active``, plus a frame
+counter, mod 8).
 """
 
 from __future__ import annotations
@@ -60,7 +64,8 @@ def synthetic_stream(timing: VGATiming, n_frames: int, *,
                      start_v: int = 0,
                      vsync_on_hsync: bool = False,
                      unresolved_prefix: int = 0) -> Iterator:
-    """Model of ``dummy_vga.v`` yielding per-cycle samples for unit tests.
+    """Model of a VGA scan-out of the reference pattern, yielding
+    per-cycle samples for unit tests.
 
     ``vsync_on_hsync`` switches from counter-wrap-aligned vsync (the naive
     FPGA style) to vsync transitions aligned with hsync leading edges (the

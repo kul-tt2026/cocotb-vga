@@ -22,14 +22,6 @@ from .video import save_gif, save_mp4
 
 __version__ = "0.1.0"
 
-
-def verilog_dir() -> str:
-    """Directory holding the bundled Verilog sources (``dummy_vga.v``)."""
-    from importlib.resources import files
-
-    return str(files("cocotb_vga") / "verilog")
-
-
 __all__ = [
     "Frame",
     "FrameAssembler",
@@ -46,5 +38,4 @@ __all__ = [
     "expand_channel",
     "save_gif",
     "save_mp4",
-    "verilog_dir",
 ]

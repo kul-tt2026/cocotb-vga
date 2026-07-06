@@ -41,12 +41,18 @@ Every completed frame is also saved automatically to
 
 ## Signal binding
 
-**`TinyVGA(dut.uo_out)`** — the [TinyVGA Pmod](https://github.com/mole99/tiny-vga)
-pinout used by Tiny Tapeout VGA projects:
+**`TinyVGA(dut.uo_out)`** — the [Tiny VGA Pmod](https://github.com/mole99/tiny-vga)
+pinout used by Tiny Tapeout VGA projects. On the TT board, `uo_out[0..3]`
+drive Pmod pins 1–4 and `uo_out[4..7]` drive Pmod pins 7–10, so the spec's
+pin table maps to:
 
 | uo_out bit | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  |
 |------------|----|----|----|----|----|----|----|----|
+| Pmod pin   | 1  | 2  | 3  | 4  | 7  | 8  | 9  | 10 |
 | signal     | R1 | G1 | B1 | VS | R0 | G0 | B0 | HS |
+
+R1/G1/B1 are the most significant color bits, R0/G0/B0 the least
+significant, per the Tiny VGA spec.
 
 **`VGASignals(hsync=..., vsync=..., red=..., green=..., blue=...)`** — separate
 signals of any width; channels are scaled to 8 bit with
@@ -86,32 +92,20 @@ pixel per sampled clock edge. If your design divides its input clock (e.g.
 with that summary attached. `wait_for_frames()` times out with a diagnosis
 ("no sync activity", "hsync but no vsync", ...) instead of hanging.
 
-## Self-test with the bundled dummy generator
+## Testing
 
-The package ships `verilog/dummy_vga.v`, a parameterized pattern generator
-(8 color bars shifting one position per frame) whose expected image is known
-pixel-exactly (`cocotb_vga.pattern`). The self-test captures its output
-through both signal adapters and compares every pixel:
+The frame reconstruction and timing checks are pure Python
+(`FrameAssembler`), tested without a simulator against synthetic scan-out
+streams of a reference color-bar pattern (`cocotb_vga.pattern`):
 
 ```sh
 pip install -e .[dev]
-make -C sim                          # fast 64x48 toy geometry (~seconds)
-make -C sim VGA_SELFTEST_TIMING=vga  # one real 640x480@60 frame (~minutes)
-```
-
-Frames, GIF and diff images land in `sim/vga_out/`. Reuse the same self-test
-from another repo by pointing a Makefile at
-`$(python -c 'import cocotb_vga; print(cocotb_vga.verilog_dir())')/dummy_vga.v`
-with `COCOTB_TEST_MODULES = cocotb_vga.selftest`.
-
-## Unit tests
-
-The frame reconstruction and timing checks are pure Python
-(`FrameAssembler`), tested without a simulator:
-
-```sh
 pytest
 ```
+
+`cocotb_vga.pattern` also gives you `expected_frame()` / `detect_phase()`
+so a design that renders the reference pattern in hardware can be verified
+pixel-exactly end-to-end.
 
 ## Video export
 

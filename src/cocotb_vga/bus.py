@@ -28,23 +28,20 @@ def expand_channel(value: int, width: int) -> int:
 
 
 class TinyVGA:
-    """The Tiny Tapeout `TinyVGA Pmod <https://github.com/mole99/tiny-vga>`_
-    pinout, packed on a single 8-bit output (``uo_out``):
+    """The `Tiny VGA Pmod <https://github.com/mole99/tiny-vga>`_ pinout,
+    packed on a single 8-bit output (``uo_out``).
 
-    ====  ======
-    bit   signal
-    ====  ======
-    0     R1 (msb)
-    1     G1 (msb)
-    2     B1 (msb)
-    3     VSync
-    4     R0 (lsb)
-    5     G0 (lsb)
-    6     B0 (lsb)
-    7     HSync
-    ====  ======
+    On the Tiny Tapeout board, ``uo_out[0..3]`` drive Pmod pins 1-4 and
+    ``uo_out[4..7]`` drive Pmod pins 7-10, so the Tiny VGA spec maps to:
 
-    Equivalent to the Verilog
+    ==========  ==  ==  ==  ==  ==  ==  ==  ==
+    uo_out bit   0   1   2   3   4   5   6   7
+    Pmod pin     1   2   3   4   7   8   9  10
+    signal      R1  G1  B1  VS  R0  G0  B0  HS
+    ==========  ==  ==  ==  ==  ==  ==  ==  ==
+
+    R1/G1/B1 are the most significant and R0/G0/B0 the least significant
+    color bits. Equivalent to the Verilog
     ``assign uo_out = {hsync, b[0], g[0], r[0], vsync, b[1], g[1], r[1]};``
     used by the TT VGA playground.
     """
